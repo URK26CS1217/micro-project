@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>PlaceHub – Student Placement Portal</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&display=swap');
+:root{--bg:#f5f6fa;--card:#fff;--ink:#14213d;--muted:#5b667a;--line:#dde1ea;--brand:#0f766e;--accent:#f4a000;--err:#d62839;--ok:#1b9e5a}
+:root[data-theme=dark]{--bg:#0e1424;--card:#172038;--ink:#eef1f8;--muted:#9aa6bd;--line:#2a3555;--brand:#2dd4bf;--accent:#ffb627;--err:#ff6b7a;--ok:#4ade80}
+*{box-sizing:border-box}
+body{margin:0;font-family:Manrope,system-ui,sans-serif;background:var(--bg);color:var(--ink);line-height:1.6;transition:background .2s,color .2s}
+a{color:var(--brand)}
+
+/* Pages (hash routing) */
+.page{display:none}.page.active{display:block}
+
+/* Navigation */
+.nav{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:1rem;padding:.7rem 1.5rem;background:var(--card);border-bottom:1px solid var(--line)}
+.brand{font-weight:800;font-size:1.3rem;text-decoration:none;color:var(--ink);margin-right:auto}.brand span{color:var(--brand)}
+#links{display:flex;gap:1.2rem}#links a{text-decoration:none;color:var(--muted);font-weight:600}#links a:hover{color:var(--brand)}
+.icon-btn{background:none;border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:.35rem .65rem;font-size:1.1rem;cursor:pointer}
+#menuBtn{display:none}
+
+/* Buttons, hero, cards */
+.btn{display:inline-block;border:0;border-radius:8px;padding:.7rem 1.3rem;font:inherit;font-weight:700;cursor:pointer;text-decoration:none;background:var(--brand);color:#fff}
+.btn.ghost{background:none;border:2px solid var(--brand);color:var(--brand)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.hero{padding:5rem 1.5rem 4rem;max-width:960px;margin:auto}
+.hero h1{font-size:clamp(2.2rem,6vw,4rem);line-height:1.1;margin:0 0 1rem;letter-spacing:-.02em}
+.hero p{max-width:56ch;color:var(--muted);font-size:1.15rem}.hero .btn{margin:.5rem .6rem 0 0}
+.section{max-width:960px;margin:auto;padding:1rem 1.5rem 3rem}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:1.2rem}
+.card h3{margin:.2rem 0}.card p{margin:0;color:var(--muted)}
+.tag{display:inline-block;font-size:.8rem;font-weight:700;padding:.1rem .6rem;border-radius:99px;background:var(--line);color:var(--ink)}
+footer{text-align:center;color:var(--muted);padding:2rem 1rem;font-size:.9rem}
+
+/* Forms */
+.auth{max-width:440px;margin:2.5rem auto;padding:0 1rem}
+.auth .card{padding:1.8rem}.auth h1{margin-top:0}
+label{display:block;font-weight:600;margin:.9rem 0 .25rem}
+input,select{width:100%;padding:.65rem .8rem;font:inherit;color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:8px}
+input:focus,select:focus,button:focus-visible{outline:3px solid var(--accent);outline-offset:1px}
+input.invalid,select.invalid{border-color:var(--err);background:color-mix(in srgb,var(--err) 8%,var(--bg))}
+input.valid,select.valid{border-color:var(--ok)}
+.error-msg{display:block;min-height:1.1rem;color:var(--err);font-size:.85rem;font-weight:600}
+.check{display:flex;gap:.5rem;align-items:center;font-weight:400}.check input{width:auto}
+.pw{position:relative}.pw .icon-btn{position:absolute;right:6px;top:6px;padding:.2rem .5rem}
+.banner{padding:.7rem 1rem;border-radius:8px;margin-bottom:1rem;font-weight:600;display:none}
+.banner.show{display:block}
+.banner.bad{background:color-mix(in srgb,var(--err) 15%,var(--card));color:var(--err)}
+.banner.good{background:color-mix(in srgb,var(--ok) 15%,var(--card));color:var(--ok)}
+form .btn{width:100%;margin-top:1.2rem}
+
+/* Dashboard: CSS Grid on desktop */
+.dash{display:grid;grid-template-columns:250px 1fr 300px;gap:1.2rem;max-width:1280px;margin:1.5rem auto;padding:0 1.5rem}
+.dash aside ul{list-style:none;padding:0;margin:0}.dash aside li{padding:.45rem 0;border-bottom:1px solid var(--line)}
+.job{display:flex;justify-content:space-between;gap:1rem;align-items:center;margin-bottom:.8rem}
+
+/* Chatbot */
+#fab{position:fixed;right:20px;bottom:20px;width:56px;height:56px;border-radius:50%;border:0;background:var(--accent);font-size:1.5rem;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.3);z-index:30}
+#chatPanel{position:fixed;right:20px;bottom:88px;width:min(340px,calc(100vw - 40px));height:420px;display:none;flex-direction:column;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;z-index:30}
+#chatPanel.open{display:flex}#chatPanel header{background:var(--brand);color:#fff;padding:.7rem 1rem;font-weight:700}
+#chatLog{flex:1;overflow-y:auto;padding:.8rem;display:flex;flex-direction:column;gap:.5rem}
+.user-msg,.bot-msg{max-width:80%;padding:.5rem .8rem;border-radius:12px;font-size:.92rem}
+.user-msg{align-self:flex-end;background:var(--brand);color:#fff}
+.bot-msg{align-self:flex-start;background:var(--bg);border:1px solid var(--line)}
+#chatForm{display:flex;gap:.4rem;padding:.6rem;border-top:1px solid var(--line)}
+#chatForm .btn{width:auto;margin:0;padding:.5rem .9rem}
+
+/* Calculator */
+#calc .screen{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:.6rem;text-align:right;font-size:1.5rem;font-weight:700;min-height:3rem;overflow-x:auto}
+#calc .keys{display:grid;grid-template-columns:repeat(4,1fr);gap:.4rem;margin-top:.5rem}
+#calc button{padding:.7rem 0;font:inherit;font-weight:700;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+#calc button.op{background:var(--accent);color:#14213d}#calc button.eq{background:var(--brand);color:#fff}
+
+/* Mobile: Flexbox single column + hamburger drawer */
+@media (max-width:767px){
+  .dash{display:flex;flex-direction:column;padding:0 1rem}
+  #menuBtn{display:block}
+  #links{position:fixed;top:0;left:0;height:100vh;width:230px;flex-direction:column;padding:4.5rem 1.5rem;background:var(--card);border-right:1px solid var(--line);transform:translateX(-100%);transition:transform .25s}
+  #links.open{transform:none}
+  .nav{z-index:40}#menuBtn{position:relative;z-index:50}
+  .job{flex-direction:column;align-items:flex-start}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+</style>
+</head>
+<body>
+
+<!-- NAVIGATION -->
+<header class="nav">
+  <a class="brand" href="#index">Place<span>Hub</span></a>
+  <button id="menuBtn" class="icon-btn" aria-label="Open menu">&#9776;</button>
+  <nav id="links">
+    <a href="#index">Home</a>
+    <a href="#home">Dashboard</a>
+    <a href="#register">Register</a>
+    <a href="#signup">Sign up</a>
+    <a href="#signin">Sign in</a>
+  </nav>
+  <button id="themeToggle" class="icon-btn" aria-label="Toggle theme">&#9790;</button>
+</header>
+
+<!-- FR-01 LANDING PAGE -->
+<section class="page" data-page="index">
+  <div>
+    <section class="hero">
+      <h1>Your first job offer starts with one clear dashboard.</h1>
+      <p>PlaceHub brings campus drives, eligibility checks and application tracking into one place for B.Tech students and the placement cell.</p>
+      <a class="btn" href="#register">Create your profile</a>
+      <a class="btn ghost" href="#signin">Sign in</a>
+    </section>
+    <section class="section">
+      <div class="cards">
+        <div class="card"><span class="tag">Drives</span><h3>See every drive</h3><p>Browse open companies, packages and last dates.</p></div>
+        <div class="card"><span class="tag">Eligibility</span><h3>Know where you fit</h3><p>Check CGPA and arrear rules before you apply.</p></div>
+        <div class="card"><span class="tag">Tracking</span><h3>Follow each application</h3><p>Applied, shortlisted or selected, always visible.</p></div>
+        <div class="card"><span class="tag">Help</span><h3>Ask the assistant</h3><p>Get quick answers on resumes and interview prep.</p></div>
+      </div>
+    </section>
+    <footer>KITS Division of CSE – 25CS208 Web Technology, IA-3 Micro Project</footer>
+  </div>
+</section>
+
+<!-- FR-02 REGISTRATION PAGE -->
+<section class="page" data-page="register">
+  <div class="auth"><div class="card">
+    <h1>Create your student profile</h1>
+    <form id="registerForm" data-validate="live" novalidate>
+      <div class="banner"></div>
+      <label for="register-name">Full name</label>
+      <div><input id="register-name" data-rule="name" autocomplete="name"><span class="error-msg"></span></div>
+      <label for="register-empId">Register number</label>
+      <div><input id="register-empId" data-rule="empId"><span class="error-msg"></span></div>
+      <label for="register-email">Email address</label>
+      <div><input id="register-email" type="email" data-rule="email" autocomplete="email"><span class="error-msg"></span></div>
+      <label for="register-mobile">Mobile number</label>
+      <div><input id="register-mobile" type="tel" data-rule="mobile" inputmode="numeric"><span class="error-msg"></span></div>
+      <label for="register-dept">Division</label>
+      <div>
+        <select id="register-dept" data-rule="dept">
+          <option value="">Select division</option>
+          <option>Computer Science &amp; Engineering</option>
+          <option>Information Technology</option>
+          <option>Electronics &amp; Communication</option>
+          <option>Mechanical Engineering</option>
+          <option>Civil Engineering</option>
+        </select>
+        <span class="error-msg"></span>
+      </div>
+      <label for="register-password">Password</label>
+      <div><input id="register-password" type="password" data-rule="password" autocomplete="new-password"><span class="error-msg"></span></div>
+      <label for="register-confirm">Confirm password</label>
+      <div><input id="register-confirm" type="password" data-rule="confirm" autocomplete="new-password"><span class="error-msg"></span></div>
+      <button class="btn" type="submit" disabled>Create profile</button>
+    </form>
+  </div></div>
+</section>
+
+<!-- FR-03 SIGN-UP PAGE -->
+<section class="page" data-page="signup">
+  <div class="auth"><div class="card">
+    <h1>Sign up</h1>
+    <form id="signupForm" data-validate="live" novalidate>
+      <div class="banner"></div>
+      <label for="signup-email">Email address</label>
+      <div><input id="signup-email" type="email" data-rule="email"><span class="error-msg"></span></div>
+      <label for="signup-password">Password</label>
+      <div><input id="signup-password" type="password" data-rule="password" autocomplete="new-password"><span class="error-msg"></span></div>
+      <div>
+        <label class="check"><input type="checkbox" id="signup-terms"> I accept the Terms of Service</label>
+        <span class="error-msg"></span>
+      </div>
+      <button class="btn" type="submit" disabled>Create account</button>
+      <p>Already registered? <a href="#signin">Sign in</a></p>
+    </form>
+  </div></div>
+</section>
+
+<!-- FR-04 SIGN-IN PAGE -->
+<section class="page" data-page="signin">
+  <div class="auth"><div class="card">
+    <h1>Sign in</h1>
+    <form id="signinForm" data-validate="submit" novalidate>
+      <div class="banner" role="alert"></div>
+      <label for="signin-email">Email address</label>
+      <div><input id="signin-email" type="email" data-rule="email"><span class="error-msg"></span></div>
+      <label for="signin-password">Password</label>
+      <div>
+        <div class="pw">
+          <input id="signin-password" type="password" data-rule="password" autocomplete="current-password">
+          <button type="button" class="icon-btn toggle-pw" aria-label="Show password">&#128065;</button>
+        </div>
+        <span class="error-msg"></span>
+      </div>
+      <button class="btn" type="submit">Sign in</button>
+      <p>New here? <a href="#register">Create a profile</a></p>
+    </form>
+  </div></div>
+</section>
+
+<!-- FR-05 HOME DASHBOARD -->
+<section class="page" data-page="home">
+  <div class="dash">
+    <aside class="card">
+      <h3>Your profile</h3>
+      <ul>
+        <li>Status: <b>Registered</b></li>
+        <li>Applications: <b>3</b></li>
+        <li>Shortlisted: <b>1</b></li>
+        <li>Next test: <b>Fri, 10:00</b></li>
+      </ul>
+    </aside>
+    <section>
+      <h2 style="margin-top:0">Open drives</h2>
+      <div class="card job"><div><h3>Infosys – Systems Engineer</h3><p>Min CGPA 6.5 · 3.6 LPA · Apply by 28 Nov</p></div><a class="btn" href="#home" onclick="this.textContent='Applied';this.classList.add('ghost');return false">Apply</a></div>
+      <div class="card job"><div><h3>Zoho – Software Developer</h3><p>Min CGPA 7.0 · 7 LPA · Apply by 2 Dec</p></div><a class="btn" href="#home" onclick="this.textContent='Applied';this.classList.add('ghost');return false">Apply</a></div>
+      <div class="card job"><div><h3>TCS – Digital Associate</h3><p>Min CGPA 6.0 · 7 LPA · Apply by 5 Dec</p></div><a class="btn" href="#home" onclick="this.textContent='Applied';this.classList.add('ghost');return false">Apply</a></div>
+      <div class="card job"><div><h3>Freshworks – Web Intern</h3><p>Min CGPA 7.5 · 25k/month · Apply by 10 Dec</p></div><a class="btn" href="#home" onclick="this.textContent='Applied';this.classList.add('ghost');return false">Apply</a></div>
+    </section>
+    <aside class="card">
+      <h3>Quick calculator</h3>
+      <div id="calc"></div>
+    </aside>
+  </div>
+</section>
+
+<!-- FR-07 THEME TOGGLE + MOBILE MENU + LOGOUT -->
+<script>
+const root = document.documentElement;
+const btn = document.getElementById('themeToggle');
+function setTheme(t){
+  root.setAttribute('data-theme', t);
+  if (btn) btn.innerHTML = t === 'dark' ? '&#9788;' : '&#9790;';
+  try { localStorage.setItem('theme', t); } catch (e) {}
+}
+let saved = null;
+try { saved = localStorage.getItem('theme'); } catch (e) {}
+setTheme(saved || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
+btn.addEventListener('click', () => setTheme(root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'));
+const menu = document.getElementById('menuBtn'), links = document.getElementById('links');
+menu.addEventListener('click', () => links.classList.toggle('open'));
+document.addEventListener('click', e => { if (!links.contains(e.target) && e.target !== menu) links.classList.remove('open'); });
+document.addEventListener('click', e => { if (e.target.closest('#links a')) links.classList.remove('open'); });
+
+/* Logout button: visible only after sign-in */
+const out = document.createElement('button');
+out.id = 'logoutBtn'; out.className = 'icon-btn'; out.textContent = 'Log out';
+document.querySelector('.nav').insertBefore(out, btn);
+function syncLogout(){ let s = null; try { s = localStorage.getItem('ph_session'); } catch (e) {} out.style.display = s ? '' : 'none'; }
+out.addEventListener('click', () => { try { localStorage.removeItem('ph_session'); } catch (e) {} syncLogout(); location.hash = 'signin'; });
+syncLogout(); addEventListener('hashchange', syncLogout);
+</script>
+
+<!-- FR-02 / FR-03 / FR-04 FORM VALIDATION -->
+<script>
+const PW = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
+const RULES = {
+  name:     [v => /^[a-zA-Z\s]{2,50}$/.test(v), 'Use letters and spaces only (2–50 characters).'],
+  empId:    [v => /^[A-Z0-9]{6,12}$/i.test(v), 'Enter 6–12 letters or digits.'],
+  email:    [v => /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(v), 'Enter a valid email, like name@college.edu.'],
+  mobile:   [v => /^[6-9]\d{9}$/.test(v), 'Enter 10 digits starting with 6, 7, 8 or 9.'],
+  dept:     [v => v !== '', 'Choose your division.'],
+  password: [v => PW.test(v), 'Use 8+ characters with upper, lower, number and a symbol (@$!%*?&).'],
+  confirm:  [(v, f) => v !== '' && v === f.querySelector('[data-rule=password]').value, 'Passwords do not match.']
+};
+function isOk(el){
+  if (el.type === 'checkbox') return el.checked;
+  return RULES[el.dataset.rule][0](el.value.trim(), el.form);
+}
+function show(el){
+  const ok = isOk(el);
+  el.classList.toggle('invalid', !ok); el.classList.toggle('valid', ok);
+  const m = el.parentElement.querySelector('.error-msg');
+  if (m) m.textContent = ok ? '' : (el.type === 'checkbox' ? 'Accept the Terms of Service to continue.' : RULES[el.dataset.rule][1]);
+  return ok;
+}
+function banner(f, text, cls){ const b = f.querySelector('.banner'); if (b) { b.textContent = text; b.className = 'banner show ' + cls; } }
+
+document.querySelectorAll('form[data-validate]').forEach(form => {
+  const fields = [...form.querySelectorAll('[data-rule],input[type=checkbox]')];
+  const submit = form.querySelector('button[type=submit]');
+  const gate = form.dataset.validate === 'live';
+  const refresh = () => { if (gate) submit.disabled = !fields.every(isOk); };
+  fields.forEach(el => {
+    el.addEventListener('blur', () => show(el));
+    el.addEventListener('input', () => {
+      if (el.classList.contains('invalid') || el.classList.contains('valid')) show(el);
+      if (el.dataset.rule === 'password') { const c = form.querySelector('[data-rule=confirm]'); if (c && c.value) show(c); }
+      refresh();
+    });
+    el.addEventListener('change', () => { show(el); refresh(); });
+  });
+  refresh();
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const bad = fields.filter(el => !show(el));
+    if (bad.length) { bad[0].focus(); banner(form, 'Fix the highlighted fields and try again.', 'bad'); return; }
+    if (form.id === 'signinForm') {
+      try { localStorage.setItem('ph_session', '1'); } catch (err) {}
+      banner(form, 'Signed in. Opening your dashboard…', 'good');
+      setTimeout(() => location.hash = 'home', 800);
+      return;
+    }
+    try { localStorage.setItem('ph_user', JSON.stringify({ email: (form.querySelector('[data-rule=email]') || {}).value })); } catch (err) {}
+    banner(form, 'Account created. Redirecting to sign in…', 'good');
+    setTimeout(() => location.hash = 'signin', 1000);
+  });
+});
+document.querySelectorAll('.toggle-pw').forEach(b => b.addEventListener('click', () => {
+  const i = b.parentElement.querySelector('input'); const show = i.type === 'password';
+  i.type = show ? 'text' : 'password'; b.textContent = show ? '🙈' : '👁'; b.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+}));
+</script>
+
+<!-- FR-08 CALCULATOR -->
+<script>
+(function(){
+  const host = document.getElementById('calc'); if (!host) return;
+  host.innerHTML = '<div class="screen" id="screen">0</div><div class="keys"></div>';
+  const screen = host.querySelector('#screen'), keys = host.querySelector('.keys');
+  let expr = '';
+  const layout = ['7','8','9','/','4','5','6','*','1','2','3','-','C','0','=','+'];
+  layout.forEach(k => {
+    const b = document.createElement('button'); b.textContent = k;
+    if ('+-*/'.includes(k)) b.className = 'op'; if (k === '=') b.className = 'eq';
+    b.addEventListener('click', () => press(k)); keys.appendChild(b);
+  });
+  function draw(){ screen.textContent = expr || '0'; }
+  function press(k){
+    if (k === 'C') expr = '';
+    else if (k === '=') {
+      if (!/^[0-9+\-*/.]+$/.test(expr) || /[+\-*/]$/.test(expr)) { expr = 'Error'; }
+      else { try { const r = Function('"use strict";return (' + expr + ')')(); expr = Number.isFinite(r) ? String(+r.toFixed(8)) : 'Error'; } catch (e) { expr = 'Error'; } }
+    } else {
+      if (expr === 'Error') expr = '';
+      if ('+*/'.includes(k) && !expr) return;
+      if ('+-*/'.includes(k) && /[+\-*/]$/.test(expr)) expr = expr.slice(0, -1);
+      expr += k;
+    }
+    draw();
+  }
+  draw();
+})();
+</script>
+
+<!-- FR-06 CHATBOT -->
+<script>
+const REPLIES = [
+  [['hello','hi','hey'], 'Hi! Ask me about eligibility, resume, drives, interviews or registration.'],
+  [['eligib','cgpa','criteria'], 'Most companies need 6.5+ CGPA and no active arrears. Check each drive card for its own cutoff.'],
+  [['resume','cv'], 'Keep your resume to one page: education, projects, skills, links to GitHub and your live site.'],
+  [['drive','company','job','opening'], 'Open the Dashboard to see current drives and their last date to apply.'],
+  [['interview','prepare','aptitude'], 'Practise aptitude, one core subject, and explain your projects out loud in two minutes.'],
+  [['register','sign'], 'Use Register for your full profile. Sign up is the quick account form.'],
+  [['deadline','date'], 'Deadlines are shown on every drive card. Apply at least a day early.']
+];
+const fab = document.createElement('button'); fab.id = 'fab'; fab.setAttribute('aria-label', 'Open placement assistant'); fab.textContent = '💬';
+const panel = document.createElement('div'); panel.id = 'chatPanel';
+panel.innerHTML = '<header>Placement assistant</header><div id="chatLog"></div><form id="chatForm"><input id="chatInput" placeholder="Ask a question" autocomplete="off"><button class="btn" type="submit">Send</button></form>';
+document.body.append(fab, panel);
+const log = panel.querySelector('#chatLog'), input = panel.querySelector('#chatInput');
+function add(cls, text){ const d = document.createElement('div'); d.className = cls; d.textContent = text; log.appendChild(d); log.scrollTop = log.scrollHeight; }
+function reply(q){ q = q.toLowerCase(); const hit = REPLIES.find(r => r[0].some(k => q.includes(k))); return hit ? hit[1] : 'I can help with eligibility, resumes, drives, interviews and deadlines. Try one of those.'; }
+fab.addEventListener('click', () => { panel.classList.toggle('open'); if (!log.children.length) add('bot-msg', 'Hi, I am the PlaceHub assistant. What do you need?'); input.focus(); });
+panel.querySelector('#chatForm').addEventListener('submit', e => {
+  e.preventDefault(); const q = input.value.trim(); if (!q) return;
+  add('user-msg', q); input.value = ''; setTimeout(() => add('bot-msg', reply(q)), 400);
+});
+</script>
+
+<!-- PAGE ROUTER -->
+<script>
+const P = document.querySelectorAll('.page');
+function route(){
+  const p = location.hash.slice(1) || 'index';
+  let found = false;
+  P.forEach(s => { const on = s.dataset.page === p; s.classList.toggle('active', on); found = found || on; });
+  if (!found) P[0].classList.add('active');
+  scrollTo(0, 0);
+}
+addEventListener('hashchange', route); route();
+</script>
+</body>
+</html>
